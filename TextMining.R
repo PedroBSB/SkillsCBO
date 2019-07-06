@@ -119,23 +119,24 @@ visSave(net2, file = "sub_networkCF.html")
 
 #Latent Semantic Analysis
 page_text<-data8483[which(data8483$Category=="CF"),"Information"]
-top_5 <- lexRankr::lexRank(page_text,
-                          #only 1 article; repeat same docid for all of input vector
-                          docId = rep(1, length(page_text)),
-                          #return 5 sentences to mimick /u/autotldr's output
-                          n = 5,
-                          continuous = TRUE)
+top_15 <- lexRankr::lexRank(page_text,
+                            #only 1 article; repeat same docid for all of input vector
+                            docId = rep(1, length(page_text)),
+                            #return 15 sentences to mimick /u/autotldr's output
+                            n = 15,
+                            continuous = TRUE)
 
-#reorder the top 5 sentences to be in order of appearance in article
-order_of_appearance <- order(as.integer(gsub("_","",top_5$sentenceId)))
+#reorder the top 15 sentences to be in order of appearance in article
+order_of_appearance <- order(as.integer(gsub("_","",top_15$sentenceId)))
 #extract sentences in order of appearance
-ordered_top_5 <- top_5[order_of_appearance, "sentence"]
-ordered_top_5
+ordered_top_15 <- top_15[order_of_appearance, "sentence"]
+ordered_top_15
 
 #Write results
-fileConn<-file("top_5CF.txt")
-writeLines(ordered_top_5, fileConn)
+fileConn<-file("top_15CF.txt")
+writeLines(ordered_top_15, fileConn)
 close(fileConn)
+
 ################################################################################################
 ################################### MASSEIRO    ################################################
 
@@ -221,22 +222,22 @@ visSave(net2, file = "sub_networkMA.html")
 
 #Latent Semantic Analysis
 page_text<-data8483[which(data8483$Category=="MA"),"Information"]
-top_5 <- lexRankr::lexRank(page_text,
-                           #only 1 article; repeat same docid for all of input vector
-                           docId = rep(1, length(page_text)),
-                           #return 5 sentences to mimick /u/autotldr's output
-                           n = 5,
-                           continuous = TRUE)
+top_15 <- lexRankr::lexRank(page_text,
+                            #only 1 article; repeat same docid for all of input vector
+                            docId = rep(1, length(page_text)),
+                            #return 15 sentences to mimick /u/autotldr's output
+                            n = 15,
+                            continuous = TRUE)
 
-#reorder the top 5 sentences to be in order of appearance in article
-order_of_appearance <- order(as.integer(gsub("_","",top_5$sentenceId)))
+#reorder the top 15 sentences to be in order of appearance in article
+order_of_appearance <- order(as.integer(gsub("_","",top_15$sentenceId)))
 #extract sentences in order of appearance
-ordered_top_5 <- top_5[order_of_appearance, "sentence"]
-ordered_top_5
+ordered_top_15 <- top_15[order_of_appearance, "sentence"]
+ordered_top_15
 
 #Write results
-fileConn<-file("top_5MA.txt")
-writeLines(ordered_top_5, fileConn)
+fileConn<-file("top_15MA.txt")
+writeLines(ordered_top_15, fileConn)
 close(fileConn)
 
 
@@ -245,7 +246,7 @@ close(fileConn)
 
 textPD <- paste(data8483[which(data8483$Category=="PD"),"Information"],collapse = " ")
 textPD<-gsub("formação formação","formação",textPD)
-textPD<-gsub("formação forPDção","formação",textPD)
+textPD<-gsub("formação formação","formação",textPD)
 textPD<-gsub("descrição descrição","descrição",textPD)
 textPD<-gsub("local trabalho local","local trabalho",textPD)
 textPD<-gsub("trabalho local trabalho","trabalho local",textPD)
@@ -325,22 +326,22 @@ visSave(net2, file = "sub_networkPD.html")
 
 #Latent Semantic Analysis
 page_text<-data8483[which(data8483$Category=="PD"),"Information"]
-top_5 <- lexRankr::lexRank(page_text,
-                           #only 1 article; repeat same docid for all of input vector
-                           docId = rep(1, length(page_text)),
-                           #return 5 sentences to mimick /u/autotldr's output
-                           n = 5,
-                           continuous = TRUE)
+top_15 <- lexRankr::lexRank(page_text,
+                            #only 1 article; repeat same docid for all of input vector
+                            docId = rep(1, length(page_text)),
+                            #return 15 sentences to mimick /u/autotldr's output
+                            n = 15,
+                            continuous = TRUE)
 
-#reorder the top 5 sentences to be in order of appearance in article
-order_of_appearance <- order(as.integer(gsub("_","",top_5$sentenceId)))
+#reorder the top 15 sentences to be in order of appearance in article
+order_of_appearance <- order(as.integer(gsub("_","",top_15$sentenceId)))
 #extract sentences in order of appearance
-ordered_top_5 <- top_5[order_of_appearance, "sentence"]
-ordered_top_5
+ordered_top_15 <- top_15[order_of_appearance, "sentence"]
+ordered_top_15
 
 #Write results
-fileConn<-file("top_5PD.txt")
-writeLines(ordered_top_5, fileConn)
+fileConn<-file("top_15PD.txt")
+writeLines(ordered_top_15, fileConn)
 close(fileConn)
 ################################################################################################
 ################################### TRABALHADOR DE FABRICAÇÃO DE SORVETE  ######################
@@ -365,8 +366,6 @@ png("wordcloudTS.png", width=1280,height=800)
 wordcloud(countTS$words, countTS$n, scale=c(8,.2),min.freq=3,
           max.words=Inf, random.order=FALSE, rot.per=.15, colors=pal)
 dev.off()
-
-
 
 #Plot Network
 words_counts %>%
@@ -420,20 +419,20 @@ visSave(net2, file = "sub_networkTS.html")
 
 #Latent Semantic Analysis
 page_text<-data8483[which(data8483$Category=="TS"),"Information"]
-top_5 <- lexRankr::lexRank(page_text,
+top_15 <- lexRankr::lexRank(page_text,
                            #only 1 article; repeat same docid for all of input vector
                            docId = rep(1, length(page_text)),
-                           #return 5 sentences to mimick /u/autotldr's output
-                           n = 5,
+                           #return 15 sentences to mimick /u/autotldr's output
+                           n = 15,
                            continuous = TRUE)
 
-#reorder the top 5 sentences to be in order of appearance in article
-order_of_appearance <- order(as.integer(gsub("_","",top_5$sentenceId)))
+#reorder the top 15 sentences to be in order of appearance in article
+order_of_appearance <- order(as.integer(gsub("_","",top_15$sentenceId)))
 #extract sentences in order of appearance
-ordered_top_5 <- top_5[order_of_appearance, "sentence"]
-ordered_top_5
+ordered_top_15 <- top_15[order_of_appearance, "sentence"]
+ordered_top_15
 
 #Write results
-fileConn<-file("top_5TS.txt")
-writeLines(ordered_top_5, fileConn)
+fileConn<-file("top_15TS.txt")
+writeLines(ordered_top_15, fileConn)
 close(fileConn)
