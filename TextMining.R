@@ -348,7 +348,7 @@ close(fileConn)
 
 textTS <- paste(data8483[which(data8483$Category=="TS"),"Information"],collapse = " ")
 textTS<-gsub("formação formação","formação",textTS)
-textTS<-gsub("formação forTSção","formação",textTS)
+textTS<-gsub("formação formação","formação",textTS)
 textTS<-gsub("descrição descrição","descrição",textTS)
 textTS<-gsub("local trabalho local","local trabalho",textTS)
 textTS<-gsub("trabalho local trabalho","trabalho local",textTS)
@@ -366,6 +366,16 @@ png("wordcloudTS.png", width=1280,height=800)
 wordcloud(countTS$words, countTS$n, scale=c(8,.2),min.freq=3,
           max.words=Inf, random.order=FALSE, rot.per=.15, colors=pal)
 dev.off()
+
+
+#Network
+paired_words <- text_df %>%
+  unnest_tokens(words, text, token = "ngrams", n = 2)
+separated_words <- paired_words %>%
+  separate(words, c("word1", "word2"), sep = " ")
+words_counts <- separated_words %>%
+  count(word1, word2, sort = TRUE)
+
 
 #Plot Network
 words_counts %>%
