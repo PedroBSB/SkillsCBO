@@ -11,16 +11,20 @@ library(tidyr)
 library(igraph)
 library(ggraph)
 library(visNetwork)
+library(lexRankr)
+
 #### Produto http://shiny.rstudio.com/gallery/word-cloud.html
 #### https://kateto.net/network-visualization
+#### https://adamspannbauer.github.io/2017/12/17/summarizing-web-articles-with-r/
+#### https://cran.r-project.org/web/packages/textrank/vignettes/textrank.html#identify_relevant_sentences
 #Read data
 data8483<-read.table("Data\\EmpregosScraping8483.txt",sep="@", header = TRUE, stringsAsFactors=FALSE)
 clean.corpus <- function(string) {
   corpus <- Corpus(VectorSource(string))
   corpus <- tm_map(corpus, stripWhitespace)
   corpus <- tm_map(corpus, content_transformer(tolower))
-  corpus <- tm_map(corpus, removePunctuation)
-  corpus <- tm_map(corpus, removeNumbers)
+  #corpus <- tm_map(corpus, removePunctuation)
+  #corpus <- tm_map(corpus, removeNumbers)
   corpus <- tm_map(corpus, removeWords, stopwords("portuguese")[-which(stopwords("portuguese")=="são")]) 
   return(corpus)
 }
@@ -76,7 +80,7 @@ countWords<-textCF.ngram %>%  count(words, sort = TRUE)
 countWords <- countWords[order(-countWords$n),] 
 countWords$nodeSize<-ifelse(countWords$n<10,10,ifelse(countWords$n<100,25,50))
 countWords$textSize<-ifelse(countWords$n<100,0.5,1)
-countWords$title<-paste0("<p>Comunidade", 1:nrow(countWords),"</p>")
+countWords$title<-paste0("<p>Comunidade ", "</p>")
 words_counts$edgeSize<-ifelse(words_counts$n<10,5,ifelse(words_counts$n<100,25,50))
 
 #Graph plot
@@ -87,32 +91,51 @@ V(graph)$label.cex <-V(graph)$textSize
 #Community
 wc <-  cluster_walktrap(graph)
 V(graph)$color <- wc$membership + 1
-countWords$title <-paste0("<p> Comunidade ", wc$membership + 1,"</p>")
+V(graph)$title <-paste0("<p>",V(graph)$name,"</p><p> Comunidade ", wc$membership,"</p>")
 weights <- ifelse(crossing(wc, graph), 1, 100)
 layout <- layout_with_kk(graph, weights=weights)
 net <- visIgraph(graph, layout) %>% 
   visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)%>%
 #  visIgraphLayout(layout = "layout_with_dh") 
-  visIgraphLayout(layout = "layout_with_fr")
+#  visIgraphLayout(layout = "layout_with_fr")
 #  visIgraphLayout(layout = "layout_with_lgl")
 #  visIgraphLayout(layout = "layout_with_kk")
 #  visIgraphLayout(layout = "layout_with_graphopt") 
-#  visIgraphLayout(layout = "layout_on_sphere") 
+  visIgraphLayout(layout = "layout_on_sphere") 
 #  visIgraphLayout(layout = "layout_on_grid") 
 visSave(net, file = "networkCF.html")
 
 #Select community
-Keep <- V(graph)[wc$membership == 15]
+table(wc$membership)
+Keep <- V(graph)[wc$membership == 16]
 sub_graph  <- induced_subgraph(graph, Keep)
 wc2 <- cluster_walktrap(sub_graph)
 weights <- ifelse(crossing(wc2, sub_graph), 1, 100)
 layout <- layout_with_kk(sub_graph, weights=weights)
 net2 <- visIgraph(sub_graph, layout) %>% 
   visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)%>%
-  visIgraphLayout(layout = "layout_with_fr")
+  visIgraphLayout(layout = "layout_with_dh")
 visSave(net2, file = "sub_networkCF.html")
 
+#Latent Semantic Analysis
+page_text<-data8483[which(data8483$Category=="CF"),"Information"]
+top_5 <- lexRankr::lexRank(page_text,
+                          #only 1 article; repeat same docid for all of input vector
+                          docId = rep(1, length(page_text)),
+                          #return 5 sentences to mimick /u/autotldr's output
+                          n = 5,
+                          continuous = TRUE)
 
+#reorder the top 5 sentences to be in order of appearance in article
+order_of_appearance <- order(as.integer(gsub("_","",top_5$sentenceId)))
+#extract sentences in order of appearance
+ordered_top_5 <- top_5[order_of_appearance, "sentence"]
+ordered_top_5
+
+#Write results
+fileConn<-file("top_5CF.txt")
+writeLines(ordered_top_5, fileConn)
+close(fileConn)
 ################################################################################################
 ################################### MASSEIRO    ################################################
 
@@ -165,7 +188,7 @@ countWords<-textMA.ngram %>%  count(words, sort = TRUE)
 countWords <- countWords[order(-countWords$n),] 
 countWords$nodeSize<-ifelse(countWords$n<10,10,ifelse(countWords$n<100,25,50))
 countWords$textSize<-ifelse(countWords$n<100,0.5,1)
-countWords$title<-paste0("<p>Comunidade", 1:nrow(countWords),"</p>")
+countWords$title<-paste0("<p>Comunidade ", "</p>")
 words_counts$edgeSize<-ifelse(words_counts$n<10,5,ifelse(words_counts$n<100,25,50))
 
 #Graph plot
@@ -173,20 +196,20 @@ graph<-graph_from_data_frame(words_counts, directed = FALSE, vertices = countWor
 E(graph)$width <- words_counts$edgeSize
 V(graph)$size<-V(graph)$nodeSize
 V(graph)$label.cex <-V(graph)$textSize
-
 #Community
 wc <-  cluster_walktrap(graph)
 V(graph)$color <- wc$membership + 1
-countWords$title <-paste0("<p> Comunidade ", wc$membership + 1,"</p>")
+V(graph)$title <-paste0("<p>",V(graph)$name,"</p><p> Comunidade ", wc$membership,"</p>")
 weights <- ifelse(crossing(wc, graph), 1, 100)
 layout <- layout_with_kk(graph, weights=weights)
 net <- visIgraph(graph, layout) %>% 
   visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)%>%
-  visIgraphLayout(layout = "layout_with_dh") 
+  visIgraphLayout(layout = "layout_on_sphere") 
 visSave(net, file = "networkMA.html")
 
 #Select community
-Keep <- V(graph)[wc$membership == 15]
+table(wc$membership)
+Keep <- V(graph)[wc$membership == 16]
 sub_graph  <- induced_subgraph(graph, Keep)
 wc2 <- cluster_walktrap(sub_graph)
 weights <- ifelse(crossing(wc2, sub_graph), 1, 100)
@@ -195,6 +218,26 @@ net2 <- visIgraph(sub_graph, layout) %>%
   visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)%>%
   visIgraphLayout(layout = "layout_with_dh")
 visSave(net2, file = "sub_networkMA.html")
+
+#Latent Semantic Analysis
+page_text<-data8483[which(data8483$Category=="MA"),"Information"]
+top_5 <- lexRankr::lexRank(page_text,
+                           #only 1 article; repeat same docid for all of input vector
+                           docId = rep(1, length(page_text)),
+                           #return 5 sentences to mimick /u/autotldr's output
+                           n = 5,
+                           continuous = TRUE)
+
+#reorder the top 5 sentences to be in order of appearance in article
+order_of_appearance <- order(as.integer(gsub("_","",top_5$sentenceId)))
+#extract sentences in order of appearance
+ordered_top_5 <- top_5[order_of_appearance, "sentence"]
+ordered_top_5
+
+#Write results
+fileConn<-file("top_5MA.txt")
+writeLines(ordered_top_5, fileConn)
+close(fileConn)
 
 
 ################################################################################################
@@ -249,7 +292,7 @@ countWords<-textPD.ngram %>%  count(words, sort = TRUE)
 countWords <- countWords[order(-countWords$n),] 
 countWords$nodeSize<-ifelse(countWords$n<10,10,ifelse(countWords$n<100,25,50))
 countWords$textSize<-ifelse(countWords$n<100,0.5,1)
-countWords$title<-paste0("<p>Comunidade", 1:nrow(countWords),"</p>")
+countWords$title<-paste0("<p>Comunidade ", "</p>")
 words_counts$edgeSize<-ifelse(words_counts$n<10,5,ifelse(words_counts$n<100,25,50))
 
 #Graph plot
@@ -257,20 +300,20 @@ graph<-graph_from_data_frame(words_counts, directed = FALSE, vertices = countWor
 E(graph)$width <- words_counts$edgeSize
 V(graph)$size<-V(graph)$nodeSize
 V(graph)$label.cex <-V(graph)$textSize
-
 #Community
 wc <-  cluster_walktrap(graph)
 V(graph)$color <- wc$membership + 1
-countWords$title <-paste0("<p> Comunidade ", wc$membership + 1,"</p>")
+V(graph)$title <-paste0("<p>",V(graph)$name,"</p><p> Comunidade ", wc$membership,"</p>")
 weights <- ifelse(crossing(wc, graph), 1, 100)
 layout <- layout_with_kk(graph, weights=weights)
 net <- visIgraph(graph, layout) %>% 
   visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)%>%
-  visIgraphLayout(layout = "layout_with_dh") 
+  visIgraphLayout(layout = "layout_on_sphere") 
 visSave(net, file = "networkPD.html")
 
 #Select community
-Keep <- V(graph)[wc$membership == 15]
+table(wc$membership)
+Keep <- V(graph)[wc$membership == 16]
 sub_graph  <- induced_subgraph(graph, Keep)
 wc2 <- cluster_walktrap(sub_graph)
 weights <- ifelse(crossing(wc2, sub_graph), 1, 100)
@@ -280,6 +323,25 @@ net2 <- visIgraph(sub_graph, layout) %>%
   visIgraphLayout(layout = "layout_with_dh")
 visSave(net2, file = "sub_networkPD.html")
 
+#Latent Semantic Analysis
+page_text<-data8483[which(data8483$Category=="PD"),"Information"]
+top_5 <- lexRankr::lexRank(page_text,
+                           #only 1 article; repeat same docid for all of input vector
+                           docId = rep(1, length(page_text)),
+                           #return 5 sentences to mimick /u/autotldr's output
+                           n = 5,
+                           continuous = TRUE)
+
+#reorder the top 5 sentences to be in order of appearance in article
+order_of_appearance <- order(as.integer(gsub("_","",top_5$sentenceId)))
+#extract sentences in order of appearance
+ordered_top_5 <- top_5[order_of_appearance, "sentence"]
+ordered_top_5
+
+#Write results
+fileConn<-file("top_5PD.txt")
+writeLines(ordered_top_5, fileConn)
+close(fileConn)
 ################################################################################################
 ################################### TRABALHADOR DE FABRICAÇÃO DE SORVETE  ######################
 
@@ -325,7 +387,7 @@ countWords<-textTS.ngram %>%  count(words, sort = TRUE)
 countWords <- countWords[order(-countWords$n),] 
 countWords$nodeSize<-ifelse(countWords$n<10,10,ifelse(countWords$n<100,25,50))
 countWords$textSize<-ifelse(countWords$n<100,0.5,1)
-countWords$title<-paste0("<p>Comunidade", 1:nrow(countWords),"</p>")
+countWords$title<-paste0("<p>Comunidade ", "</p>")
 words_counts$edgeSize<-ifelse(words_counts$n<10,5,ifelse(words_counts$n<100,25,50))
 
 #Graph plot
@@ -333,20 +395,20 @@ graph<-graph_from_data_frame(words_counts, directed = FALSE, vertices = countWor
 E(graph)$width <- words_counts$edgeSize
 V(graph)$size<-V(graph)$nodeSize
 V(graph)$label.cex <-V(graph)$textSize
-
 #Community
 wc <-  cluster_walktrap(graph)
 V(graph)$color <- wc$membership + 1
-countWords$title <-paste0("<p> Comunidade ", wc$membership + 1,"</p>")
+V(graph)$title <-paste0("<p>",V(graph)$name,"</p><p> Comunidade ", wc$membership,"</p>")
 weights <- ifelse(crossing(wc, graph), 1, 100)
 layout <- layout_with_kk(graph, weights=weights)
 net <- visIgraph(graph, layout) %>% 
   visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)%>%
-  visIgraphLayout(layout = "layout_with_dh") 
+  visIgraphLayout(layout = "layout_on_sphere") 
 visSave(net, file = "networkTS.html")
 
 #Select community
-Keep <- V(graph)[wc$membership == 15]
+table(wc$membership)
+Keep <- V(graph)[wc$membership == 16]
 sub_graph  <- induced_subgraph(graph, Keep)
 wc2 <- cluster_walktrap(sub_graph)
 weights <- ifelse(crossing(wc2, sub_graph), 1, 100)
@@ -355,3 +417,23 @@ net2 <- visIgraph(sub_graph, layout) %>%
   visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)%>%
   visIgraphLayout(layout = "layout_with_dh")
 visSave(net2, file = "sub_networkTS.html")
+
+#Latent Semantic Analysis
+page_text<-data8483[which(data8483$Category=="TS"),"Information"]
+top_5 <- lexRankr::lexRank(page_text,
+                           #only 1 article; repeat same docid for all of input vector
+                           docId = rep(1, length(page_text)),
+                           #return 5 sentences to mimick /u/autotldr's output
+                           n = 5,
+                           continuous = TRUE)
+
+#reorder the top 5 sentences to be in order of appearance in article
+order_of_appearance <- order(as.integer(gsub("_","",top_5$sentenceId)))
+#extract sentences in order of appearance
+ordered_top_5 <- top_5[order_of_appearance, "sentence"]
+ordered_top_5
+
+#Write results
+fileConn<-file("top_5TS.txt")
+writeLines(ordered_top_5, fileConn)
+close(fileConn)

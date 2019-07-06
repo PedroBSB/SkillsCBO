@@ -81,10 +81,14 @@ for(i in 1:last){
         
         information<-gsub("(?<=[\\s])\\s*|^\\s+|\\s+$", "", information, perl=TRUE)
         information<-gsub("\r"," ",information)
+        information<-gsub("Qualificação: Qualificação:","Qualificação:",information)
+        information<-gsub("Descrição: Descrição:","Descrição:",information)
+        information<-gsub("Formação: Formação","Formação",information)
+        information<-gsub("Local de Trabalho: Local de Trabalho:","Local de Trabalho:",information)
         information<-gsub(":"," ",information)
         information<-gsub(",","",information)
         information<-gsub(">","",information)
-        information<-gsub("\\.","",information)
+        #information<-gsub("\\.","",information)
         information<-gsub("\\/","",information)
         
         if(identical(information, character(0))) information<-""
@@ -107,10 +111,3 @@ for(i in 1:last){
 close(pb)
 
 
-
-tt<-read.table("Data\\EmpregosScraping8483.txt",sep="@", header = TRUE, stringsAsFactors=FALSE)
-head(tt$I)
-tt<-as.character(tt$I)
-tt<-tt[tt!="I"]
-tt<-as.numeric(tt)
-max(tt,na.rm=T)
