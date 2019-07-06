@@ -69,32 +69,48 @@ words_counts %>%
        x = "", y = "")
 
 #Dynamic Network
-graph<-graph_from_data_frame(words_counts, directed = FALSE, vertices = NULL)
-E(graph)$width <- words_counts$n/10
+textCF.ngram <- text_df %>% 
+  #head(5000) %>%    # otherwise this will get very large
+  unnest_tokens(words, text, token = "ngrams", n = 1, n_min = 1)
+countWords<-textCF.ngram %>%  count(words, sort = TRUE)
+countWords <- countWords[order(-countWords$n),] 
+countWords$nodeSize<-ifelse(countWords$n<10,10,ifelse(countWords$n<100,25,50))
+countWords$textSize<-ifelse(countWords$n<100,0.5,1)
+countWords$title<-paste0("<p>Comunidade", 1:nrow(countWords),"</p>")
+words_counts$edgeSize<-ifelse(words_counts$n<10,5,ifelse(words_counts$n<100,25,50))
 
+#Graph plot
+graph<-graph_from_data_frame(words_counts, directed = FALSE, vertices = countWords)
+E(graph)$width <- words_counts$edgeSize
+V(graph)$size<-V(graph)$nodeSize
+V(graph)$label.cex <-V(graph)$textSize
 #Community
-wc <- cluster_louvain(graph)
+wc <-  cluster_walktrap(graph)
 V(graph)$color <- wc$membership + 1
+countWords$title <-paste0("<p> Comunidade ", wc$membership + 1,"</p>")
 weights <- ifelse(crossing(wc, graph), 1, 100)
 layout <- layout_with_kk(graph, weights=weights)
-
 net <- visIgraph(graph, layout) %>% 
-  visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)
+  visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)%>%
+#  visIgraphLayout(layout = "layout_with_dh") 
+  visIgraphLayout(layout = "layout_with_fr")
+#  visIgraphLayout(layout = "layout_with_lgl")
+#  visIgraphLayout(layout = "layout_with_kk")
+#  visIgraphLayout(layout = "layout_with_graphopt") 
+#  visIgraphLayout(layout = "layout_on_sphere") 
+#  visIgraphLayout(layout = "layout_on_grid") 
 visSave(net, file = "networkCF.html")
 
-#Vis network
-#data <- toVisNetworkData(graph)
-#Nodes
-#nodes<-data$nodes
-#nodes$title <- paste0("<p>", wc$membership + 1,"<br>Tooltip !</p>")
-#nodes$group <- sample(LETTERS[1:3], nb, replace = TRUE)
-
-#Edge
-#edges<-data$edges
-#edges$title <- paste0("<p>", 1:nb,"<br>Edge Tooltip !</p>")
-#net <- visNetwork(nodes = nodes, edges = edges)
-#visSave(net, file = "network.html")
-
+#Select community
+Keep <- V(graph)[wc$membership == 15]
+sub_graph  <- induced_subgraph(graph, Keep)
+wc2 <- cluster_walktrap(sub_graph)
+weights <- ifelse(crossing(wc2, sub_graph), 1, 100)
+layout <- layout_with_kk(sub_graph, weights=weights)
+net2 <- visIgraph(sub_graph, layout) %>% 
+  visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)%>%
+  visIgraphLayout(layout = "layout_with_fr")
+visSave(net2, file = "sub_networkCF.html")
 
 
 ################################################################################################
@@ -142,18 +158,43 @@ words_counts %>%
        x = "", y = "")
 
 #Dynamic Network
-graph<-graph_from_data_frame(words_counts, directed = FALSE, vertices = NULL)
-E(graph)$width <- words_counts$n/10
+textMA.ngram <- text_df %>% 
+  #head(5000) %>%    # otherwise this will get very large
+  unnest_tokens(words, text, token = "ngrams", n = 1, n_min = 1)
+countWords<-textMA.ngram %>%  count(words, sort = TRUE)
+countWords <- countWords[order(-countWords$n),] 
+countWords$nodeSize<-ifelse(countWords$n<10,10,ifelse(countWords$n<100,25,50))
+countWords$textSize<-ifelse(countWords$n<100,0.5,1)
+countWords$title<-paste0("<p>Comunidade", 1:nrow(countWords),"</p>")
+words_counts$edgeSize<-ifelse(words_counts$n<10,5,ifelse(words_counts$n<100,25,50))
+
+#Graph plot
+graph<-graph_from_data_frame(words_counts, directed = FALSE, vertices = countWords)
+E(graph)$width <- words_counts$edgeSize
+V(graph)$size<-V(graph)$nodeSize
+V(graph)$label.cex <-V(graph)$textSize
 
 #Community
-wc <- cluster_louvain(graph)
+wc <-  cluster_walktrap(graph)
 V(graph)$color <- wc$membership + 1
+countWords$title <-paste0("<p> Comunidade ", wc$membership + 1,"</p>")
 weights <- ifelse(crossing(wc, graph), 1, 100)
 layout <- layout_with_kk(graph, weights=weights)
-
 net <- visIgraph(graph, layout) %>% 
-  visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)
+  visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)%>%
+  visIgraphLayout(layout = "layout_with_dh") 
 visSave(net, file = "networkMA.html")
+
+#Select community
+Keep <- V(graph)[wc$membership == 15]
+sub_graph  <- induced_subgraph(graph, Keep)
+wc2 <- cluster_walktrap(sub_graph)
+weights <- ifelse(crossing(wc2, sub_graph), 1, 100)
+layout <- layout_with_kk(sub_graph, weights=weights)
+net2 <- visIgraph(sub_graph, layout) %>% 
+  visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)%>%
+  visIgraphLayout(layout = "layout_with_dh")
+visSave(net2, file = "sub_networkMA.html")
 
 
 ################################################################################################
@@ -201,18 +242,43 @@ words_counts %>%
        x = "", y = "")
 
 #Dynamic Network
-graph<-graph_from_data_frame(words_counts, directed = FALSE, vertices = NULL)
-E(graph)$width <- words_counts$n/10
+textPD.ngram <- text_df %>% 
+  #head(5000) %>%    # otherwise this will get very large
+  unnest_tokens(words, text, token = "ngrams", n = 1, n_min = 1)
+countWords<-textPD.ngram %>%  count(words, sort = TRUE)
+countWords <- countWords[order(-countWords$n),] 
+countWords$nodeSize<-ifelse(countWords$n<10,10,ifelse(countWords$n<100,25,50))
+countWords$textSize<-ifelse(countWords$n<100,0.5,1)
+countWords$title<-paste0("<p>Comunidade", 1:nrow(countWords),"</p>")
+words_counts$edgeSize<-ifelse(words_counts$n<10,5,ifelse(words_counts$n<100,25,50))
+
+#Graph plot
+graph<-graph_from_data_frame(words_counts, directed = FALSE, vertices = countWords)
+E(graph)$width <- words_counts$edgeSize
+V(graph)$size<-V(graph)$nodeSize
+V(graph)$label.cex <-V(graph)$textSize
 
 #Community
-wc <- cluster_louvain(graph)
+wc <-  cluster_walktrap(graph)
 V(graph)$color <- wc$membership + 1
+countWords$title <-paste0("<p> Comunidade ", wc$membership + 1,"</p>")
 weights <- ifelse(crossing(wc, graph), 1, 100)
 layout <- layout_with_kk(graph, weights=weights)
-
 net <- visIgraph(graph, layout) %>% 
-  visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)
+  visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)%>%
+  visIgraphLayout(layout = "layout_with_dh") 
 visSave(net, file = "networkPD.html")
+
+#Select community
+Keep <- V(graph)[wc$membership == 15]
+sub_graph  <- induced_subgraph(graph, Keep)
+wc2 <- cluster_walktrap(sub_graph)
+weights <- ifelse(crossing(wc2, sub_graph), 1, 100)
+layout <- layout_with_kk(sub_graph, weights=weights)
+net2 <- visIgraph(sub_graph, layout) %>% 
+  visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)%>%
+  visIgraphLayout(layout = "layout_with_dh")
+visSave(net2, file = "sub_networkPD.html")
 
 ################################################################################################
 ################################### TRABALHADOR DE FABRICAÇÃO DE SORVETE  ######################
@@ -252,15 +318,40 @@ words_counts %>%
        x = "", y = "")
 
 #Dynamic Network
-graph<-graph_from_data_frame(words_counts, directed = FALSE, vertices = NULL)
-E(graph)$width <- words_counts$n/10
+textTS.ngram <- text_df %>% 
+  #head(5000) %>%    # otherwise this will get very large
+  unnest_tokens(words, text, token = "ngrams", n = 1, n_min = 1)
+countWords<-textTS.ngram %>%  count(words, sort = TRUE)
+countWords <- countWords[order(-countWords$n),] 
+countWords$nodeSize<-ifelse(countWords$n<10,10,ifelse(countWords$n<100,25,50))
+countWords$textSize<-ifelse(countWords$n<100,0.5,1)
+countWords$title<-paste0("<p>Comunidade", 1:nrow(countWords),"</p>")
+words_counts$edgeSize<-ifelse(words_counts$n<10,5,ifelse(words_counts$n<100,25,50))
+
+#Graph plot
+graph<-graph_from_data_frame(words_counts, directed = FALSE, vertices = countWords)
+E(graph)$width <- words_counts$edgeSize
+V(graph)$size<-V(graph)$nodeSize
+V(graph)$label.cex <-V(graph)$textSize
 
 #Community
-wc <- cluster_louvain(graph)
+wc <-  cluster_walktrap(graph)
 V(graph)$color <- wc$membership + 1
+countWords$title <-paste0("<p> Comunidade ", wc$membership + 1,"</p>")
 weights <- ifelse(crossing(wc, graph), 1, 100)
 layout <- layout_with_kk(graph, weights=weights)
-
 net <- visIgraph(graph, layout) %>% 
-  visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)
+  visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)%>%
+  visIgraphLayout(layout = "layout_with_dh") 
 visSave(net, file = "networkTS.html")
+
+#Select community
+Keep <- V(graph)[wc$membership == 15]
+sub_graph  <- induced_subgraph(graph, Keep)
+wc2 <- cluster_walktrap(sub_graph)
+weights <- ifelse(crossing(wc2, sub_graph), 1, 100)
+layout <- layout_with_kk(sub_graph, weights=weights)
+net2 <- visIgraph(sub_graph, layout) %>% 
+  visInteraction(dragNodes = TRUE, dragView = TRUE, zoomView = TRUE)%>%
+  visIgraphLayout(layout = "layout_with_dh")
+visSave(net2, file = "sub_networkTS.html")
